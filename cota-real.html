@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script src="http://openexchangerates.github.io/money.js/money.min.js"></script>
+
+	<title>Proposta 1</title>
+</head>
+<body>
+
+	<h1>Teste de seleção</h1><br>
+
+	<p>Clique no botão para iniciar o programa.</p>
+	<p>Após apertado irá fazer as requisições e calcular as respostas</p>
+	<button onclick="fazerCalculo()">Calcular</button>
+
+	<p id="resposta"> </p><br>
+	
+	<p>Proposta 1</p>
+
+<script type="text/javascript">
+	//realiza a leitura dos dias a partir do dia 7, de agosto de 2009 ao dia 17 de novembro de 2011.
+	function fazerCalculo(){
+		document.getElementById("resposta").innerHTML = calcular();
+	}
+
+
+	function calcular(){
+		document.write("go! calculando...\n");
+		
+		/*declarações*/
+		//primeiro e ultimo dia, serão usados para a iteração no loop principal
+		var currentDate = new Date("2009, 8, 07 ");  //Year, Month, Day; data inicial
+		var lastDate = new Date("2011, 11, 17"); //Year, Month, Day; data final
+		
+		//para inicializar e desconsiderar as horas na comparação
+		currentDate.setHours(0,0,0,0);
+		lastDate.setHours(0,0,0,0);
+
+		//variaveis que serao usadas para conseguir calcular média, maior valor e menor valor.
+		var arrayDates = []; 	//cria um array com os dias que será acessada após ter os dados da requisição
+		var valorTotal = 0.0;	//armazena a soma de todos os valores para calcular a média
+		var valor = 0.0; 		//armazena o valor da data atual na iteração dentro da funcao de requisição
+		var menorValor = 100.0; //armazena o menor valor
+		var maiorValor = 0.0 	//armazena o maior valor
+		var diaMaiorValor = currentDate;//armazena a data de maior valor
+		var diaMenorValor = currentDate;//armazena a data de menor valor 
+		var i = 0;				//contador e indice do vetor de datas no loop principal
+		var j = 0;				//contador e indice do vetor de datas dentro da função de requisição
+
+		//loop principal
+		do{
+			date = formatIso(currentDate);//formata a data para: 'YY-MM-DD'
+			
+			//faz a requisição GET. se der certo, executa a função no parametro. moeda base sendo o USD(dolar)
+			$.getJSON('http://api.fixer.io/'+date+'?base=USD', function(data) { 
+			    //resposta chega em data. converte o objeto JSON que chega para poder acessa-lo
+			    var mensagemJson = JSON.stringify(data);
+			    var moeda = JSON.parse(mensagemJson);
+			    valor = moeda.rates.BRL; //acessa a moeda real
+
+			    if (valor<menorValor) {
+			    	menorValor = valor;
+			    	diaMenorValor = arrayDates[j];
+
+			    }
+			    if (valor>maiorValor){
+			    	maiorValor = valor;
+			    	diaMaiorValor = arrayDates[j]; //vai sempre pegar o ultimo dia 
+			    }
+			    j++;
+			    if (!(j==0 || j==i)){
+			    	valorTotal += valor;//nao conta o primeiro e ultimo caso para a média
+			    }else{
+			    	console.log(arrayDates[j]);
+				}
+				//quando os indices forem iguais. Aa leitura estará completa.
+			    if(j==i){ //apos ler todos os dias. imprime o resultado.
+
+			    	document.write("<br>");
+			    	document.write("maior valor!!: "+maiorValor + " na data: "+ diaMaiorValor);
+			    	document.write("<br>");
+			    	document.write("menor valor!!: "+menorValor + " na data: "+ diaMenorValor); //dando valor zoado
+			    	document.write("<br>");
+			    	document.write("media: "+( valorTotal/(j-2)) );	// -2 desconsidera o inicial e o ultimo
+			    	document.write("<br> j:"+ j + " i:"+i);
+			    	console.log(valorTotal);
+			    	console.log(diaMaiorValor);
+			    	console.log(diaMenorValor);
+
+			    }//fim print resultado
+
+			});//fim requisicao GET
+		
+			//atualiza o valor total e o contador para o calculo da média
+			arrayDates[i] = date;
+			i++;
+			//incrementa o dia em +1
+			currentDate.setDate(currentDate.getDate()+1); 
+
+		}while(currentDate < lastDate); //fim loop principal
+		
+		document.write("dias contados: "+ i);
+		document.write("<br>Calculando média e dias de maior e menor valores...");
+	}//fim funcao calcular
+
+
+	//formata a data para o padrao: YY-MM-DD
+	function formatIso(date){
+		var array = date.toISOString().split('T');
+		return array[0];
+	}
+</script>
+
+</body>
+
+</html>
